@@ -29,6 +29,7 @@ public class RegisterServlet extends HttpServlet {
  }
 
  protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+  
   String firstName = req.getParameter("firstName");
   String lastName = req.getParameter("lastName");
   String userName = req.getParameter("userName");

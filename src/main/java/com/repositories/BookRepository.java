@@ -18,109 +18,170 @@ import com.mysql.cj.protocol.ResultSet;
 
 public class BookRepository {
 
- public static final Connection conn = DB.getConnection();
+  public static final Connection conn = DB.getConnection();
 
- public Book getBookByISBN(String ISBN) {
-  Book book = null;
-  PreparedStatement ps;
+  public Book getBookByISBN(String ISBN) {
 
-  try {
-   ps = conn.prepareStatement("SELECT * FROM books WHERE ISBN = ?");
-   ps.setString(1, ISBN);
+    Book book = null;
 
-   ResultSet rs = ps.executeQuery();
-   if (rs.next()) {
-    book = new Book(
-      rs.getString(1),
-      rs.getString(2),
-      rs.getString(3),
-      rs.getString(4),
-      LocalDate.parse(rs.getString(5)));
-   }
+    PreparedStatement ps;
 
-   rs.close();
-   ps.close();
+    try {
 
-  } catch (SQLException e) {
-   e.printStackTrace();
-  }
+      ps = conn.prepareStatement("SELECT * FROM books WHERE ISBN = ?");
 
-  return book;
- }
+      ps.setString(1, ISBN);
 
- public String getCheckoutDate(String ISBN) {
-  String result = "";
-  PreparedStatement ps;
+      ResultSet rs = ps.executeQuery();
 
-  try {
-   ps.conn.prepareStatement("SELECT checkedOut from bookCheckout where ISBN = ? and returned is null");
-   ps.setString(1, ISBN);
+      if (rs.next()) {
+        book = new Book(
+            rs.getString(1),
+            rs.getString(2),
+            rs.getString(3),
+            rs.getString(4),
+            LocalDate.parse(rs.getString(5)));
+      }
 
-   ResultSet rs = ps.executeQuery();
-   if (rs.next()) {
-    result = rs.getString(1);
-   }
+      rs.close();
 
-   rs.close();
-   ps.close();
-  } catch (SQLException e) {
-   e.printStackTrace();
-  }
+      ps.close();
 
-  return result;
- }
-
- public String getDueDate(String ISBN) {
-  String result = "";
-  PreparedStatement ps;
-
-  try {
-   ps.conn.prepareStatement("SELECT dueDate from bookCheckout where ISBN = ? and returned is null");
-   ps.setString(1, ISBN);
-
-   ResultSet rs = ps.executeQuery();
-   if (rs.next()) {
-    result = rs.getString(1);
-   }
-
-   rs.close();
-   ps.close();
-  } catch (SQLException e) {
-   e.printStackTrace();
-  }
-
-  return result;
- }
-
- public String getRenterInfo(String ISBN) {
-  String patron = null;
-  PreparedStatement ps;
-
-  try {
-   ps.conn.prepareStatement("SELECT patronID FROM bookCheckout WHERE ISBN = ? AND returned IS null");
-   ps.setInt(1, rs.getInt(1));
-
-   ResultSet rs = ps.executeQuery();
-   if (rs.next()) {
-    ps = conn.prepareStatement("SELECT username FROM patron WHERE patronID = ?");
-    ps.setInt(1, rs.getInt(1));
-
-    rs = ps.executeQuery();
-    if (rs.next()) {
-     patron = rs.getString(1);
+    } catch (SQLException e) {
+      e.printStackTrace();
     }
-   }
 
-   rs.close();
-   ps.close();
-  } catch (SQLException e) {
-   e.printStackTrace();
+    return book;
   }
 
-  return patron;
- }
+  public String getCheckoutDate(String ISBN) {
 
- public List<String[]> getRentHistory(String ISBN) {
-  List<String[]> bookHistory = new ArrayList<>();
- }
+    String result = "";
+
+    PreparedStatement ps;
+
+    try {
+
+      ps.conn.prepareStatement("SELECT checkedOut from bookCheckout where ISBN = ? and returned is null");
+
+      ps.setString(1, ISBN);
+
+      ResultSet rs = ps.executeQuery();
+
+      if (rs.next()) {
+        result = rs.getString(1);
+      }
+
+      rs.close();
+
+      ps.close();
+
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return result;
+  }
+
+  public String getDueDate(String ISBN) {
+
+    String result = "";
+
+    PreparedStatement ps;
+
+    try {
+
+      ps.conn.prepareStatement("SELECT dueDate from bookCheckout where ISBN = ? and returned is null");
+
+      ps.setString(1, ISBN);
+
+      ResultSet rs = ps.executeQuery();
+      if (rs.next()) {
+        result = rs.getString(1);
+      }
+
+      rs.close();
+
+      ps.close();
+
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return result;
+  }
+
+  public String getRenterInfo(String ISBN) {
+
+    String patron = null;
+
+    PreparedStatement ps;
+
+    try {
+
+      ps.conn.prepareStatement("SELECT patronID FROM bookCheckout WHERE ISBN = ? AND returned IS null");
+
+      ps.setInt(1, rs.getInt(1));
+
+      ResultSet rs = ps.executeQuery();
+
+      if (rs.next()) {
+        ps = conn.prepareStatement("SELECT username FROM patron WHERE patronID = ?");
+        ps.setInt(1, rs.getInt(1));
+
+        rs = ps.executeQuery();
+        if (rs.next()) {
+          patron = rs.getString(1);
+        }
+      }
+
+      rs.close();
+
+      ps.close();
+
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return patron;
+  }
+
+  public List<String[]> getRentHistory(String ISBN) {
+
+    List<String[]> bookHistory = new ArrayList<>();
+
+    PatronRepository patronRepository = new PatronRepository();
+
+    PreparedStatement ps;
+
+    try {
+
+      ps = conn.prepareStatement("SELECT patronID, checkedOut, dueDate, returned FROM bookCheckout WHERE ISBN = ?");
+
+      ps.setString(1, ISBN);
+
+      ResultSet rs = ps.executeQuery();
+
+      while (rs.next()) {
+
+        bookHistory.add(
+            new String[] {
+                patronRepository.getPatronByID(
+                    rs.getInt(1)).getUsername(),
+                rs.getString(2),
+                rs.getString(3),
+                rs.getString(4)
+            });
+      }
+
+      rs.close();
+
+      ps.close();
+
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return bookHistory;
+  }
 }
